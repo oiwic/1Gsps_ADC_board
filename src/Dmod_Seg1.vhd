@@ -131,7 +131,8 @@ architecture Behavioral of Dmod_Seg is
   signal Estmr_C : Estmr_CC;
   signal state : Estmr_state;
   signal Estmr_FSM_dout : std_logic_vector(3 downto 0);
-
+  signal Pstprc_add_stp_d : std_logic;
+  
   component Win_RAM_top
     port(
       posedge_sample_trig   : in     std_logic;
@@ -328,6 +329,14 @@ begin
     Pstprc_finish  <= Pstprc_finish_seq(0);  -- pstprc_finish_seq(pstprc_ch_num-1 downto 0) turn '1'                                        -- at the same time
     pstprc_add_stp <= Pstprc_add_stp_seq(0);
 
+    Pstprc_add_stp_d_ps: process (clk, rst_n) is
+    begin  -- process Pstprc_add_stp_d_ps
+      if rst_n = '0' then               -- asynchronous reset (active low)
+        Pstprc_add_stp_d<='0';
+      elsif clk'event and clk = '1' then  -- rising clock edge
+        Pstprc_add_stp_d<=Pstprc_add_stp;
+      end if;
+    end process Pstprc_add_stp_d_ps;    --for extension of the signal to next module
 
 -------------------------------------------------------------------------------
   end generate Post_process_insts;
@@ -366,7 +375,7 @@ begin
       en             => '0',
       I              => pstprc_Idata(i),
       Q              => pstprc_Qdata(i),
-      Pstprc_add_stp => Pstprc_add_stp,
+      Pstprc_add_stp => Pstprc_add_stp or Pstprc_add_stp_d,
       state          => state(i),
       stat_rdy       => stat_rdy(i)
       );
